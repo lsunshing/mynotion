@@ -99,6 +99,41 @@ pnpm serve        # = pnpm build && pnpm start
 
 > **Windows 已知问题**：Vite 8 底层用 rolldown，其平台原生 `.node` 绑定在开启了 Smart App Control 的 Windows 上会被拦截，`pnpm build` 可能报加载原生模块失败。三个选择：① 日常直接用 `pnpm dev`，不需要构建；② 在 CI 或 Docker 里构建，产物拷回本地；③ 手动 `pnpm add rolldown@1.2.14`（版本必须与 `pnpm-lock.yaml` 里的 rolldown 一致），让 Vite 走 bundled JS 回退路径。详见 [docs/known-issues.md](docs/known-issues.md)。
 
+### Docker（不想装 Node，或想让它常驻某台机器）
+
+```bash
+git clone https://github.com/lsunshing/mynotion.git
+cd mynotion
+docker compose up -d --build
+# 打开 http://127.0.0.1:8791
+```
+
+镜像里就是上面那套生产单进程（服务端直接跑 TypeScript + `serveStatic` 托管前端产物），除 Node 运行时之外只有 6.5 MB 业务文件；宿主机不需要装 Node 和 pnpm，也不需要任何构建工具链。
+
+第一次进去要凭证：容器分不出"来自宿主机"和"来自局域网"的连接，所以即使你只在 localhost 上用，也得先输一次。
+
+```bash
+docker compose exec mynotion node scripts/share.mjs
+```
+
+点开输出里"本机"那条链接就行，浏览器拿到一个一年有效期的 Cookie，之后不再问。凭证存在卷里的 `/data/token`，容器重启不换。
+
+| 位置 | 说明 |
+| --- | --- |
+| 数据、凭证、备份 | 命名卷 `mynotion-data` 的 `/data`。`docker compose down` 不删它，加 `-v` 才会 |
+| 备份 | `docker compose exec mynotion node scripts/backup.mjs`，快照写在数据库旁边 |
+| 换机器 | 把卷里的 `mynotion.db` 拷到新机器的卷里；或者让 `DATA_FILE` 直接指向那个文件 |
+
+中国大陆构建要换两个源（Docker Hub 和 npm 官方源常常连不上），`compose.yaml` 读这两个环境变量：
+
+```bash
+export NODE_IMAGE=docker.m.daocloud.io/library/node:24-slim
+export NPM_REGISTRY=https://registry.npmmirror.com
+docker compose up -d --build
+```
+
+bind mount 的权限、只绑回环、加速站怎么自查、以及"容器没有 HTTPS"这些限制，见 [docs/docker.md](docs/docker.md)。
+
 ## 常用命令
 
 | 命令 | 作用 |
