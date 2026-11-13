@@ -8,6 +8,7 @@ import { fileURLToPath } from "node:url";
 import { db, sqliteVersion } from "./db.ts";
 import { migrate } from "./db/migrate.ts";
 import { loadToken } from "./lib/token.ts";
+import { DB_PATH } from "./lib/paths.ts";
 import { authMiddleware, loginRoute } from "./middleware/auth.ts";
 import { pagesRoute } from "./routes/pages.ts";
 import { trashRoute } from "./routes/trash.ts";
@@ -58,7 +59,7 @@ app.get("/api/health", (c) =>
     ok: true,
     sqliteVersion: sqliteVersion(),
     capabilities,
-    dbPath: process.env.DATA_FILE ?? "data/mynotion.db",
+    dbPath: DB_PATH,
   }),
 );
 
@@ -82,6 +83,6 @@ serve({ fetch: app.fetch, port, hostname }, (info) => {
   const shown = hostname === "0.0.0.0" || hostname === "::" ? "127.0.0.1" : hostname;
   console.log(`server listening on http://${shown}:${info.port}`);
   if (hostname !== "127.0.0.1" && hostname !== "localhost") {
-    console.log(`局域网访问需带凭证：pnpm share`);
+    console.log("非本机访问需要凭证：node scripts/share.mjs（Docker: docker compose exec <服务名> node scripts/share.mjs）");
   }
 });

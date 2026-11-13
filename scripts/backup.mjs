@@ -7,7 +7,8 @@ const root = path.resolve();
 const dbPath = process.env.DATA_FILE ?? path.join(root, "data", "mynotion.db");
 const d = new Date();
 const stamp = `${d.getFullYear()}${String(d.getMonth() + 1).padStart(2, "0")}${String(d.getDate()).padStart(2, "0")}`;
-const out = process.argv[2] ?? path.join(root, "data", `backup-${stamp}.db`);
+// 默认落在数据库旁边：容器里数据库在挂载卷，备份也得在卷里，否则随容器一起没了。
+const out = process.argv[2] ?? path.join(path.dirname(dbPath), `backup-${stamp}.db`);
 
 const src = new DatabaseSync(dbPath);
 await backup(src, out);

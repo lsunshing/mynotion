@@ -1,0 +1,19 @@
+services:
+  mynotion:
+    build:
+      context: .
+      # 国内网络构建时去掉下面两行的注释（也可以 docker build --build-arg 传）。
+      # args:
+      #   NPM_REGISTRY: https://registry.npmmirror.com
+    image: mynotion:local
+    restart: unless-stopped
+    ports:
+      # 宿主机端口:容器端口。改成 "127.0.0.1:8791:8791" 就只对本机开放。
+      - "8791:8791"
+    volumes:
+      - mynotion-data:/data
+    # 想固定访问凭证就在容器环境里设 MYNOTION_TOKEN；不设则首次启动随机生成，
+    # 存在卷里的 /data/token，重启不变、已登录的设备不会因为重启而失效。
+
+volumes:
+  mynotion-data:

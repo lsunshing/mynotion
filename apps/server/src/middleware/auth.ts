@@ -64,7 +64,7 @@ function loginPage(error?: string): string {
       <h1>MyNotion 访问验证</h1>
       ${error ? `<p class="err">${error}</p>` : ""}
       <p>这不是公网服务，凭证由提供这台机器的用户在本地生成：
-         在 MyNotion 所在机器上运行 <code>pnpm share</code>，把输出的凭证填进来。</p>
+         在运行 MyNotion 的机器或容器里执行 <code>node scripts/share.mjs</code>，把输出的凭证填进来。</p>
       <form method="get" action="/login">
         <input name="token" autofocus autocomplete="off" spellcheck="false" placeholder="访问凭证" />
         <button type="submit">进入</button>
@@ -81,7 +81,7 @@ export function authMiddleware(token: string): MiddlewareHandler {
     const path = c.req.path;
     if (path === "/login" || ASSET.test(path)) return next();
     if (path.startsWith("/api")) {
-      return c.json({ error: { message: "未授权：请在运行 MyNotion 的机器上执行 pnpm share 获取访问凭证" } }, 401);
+      return c.json({ error: { message: "未授权：请在运行 MyNotion 的机器或容器里执行 node scripts/share.mjs 获取访问凭证" } }, 401);
     }
     return c.html(loginPage());
   };

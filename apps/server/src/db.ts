@@ -1,12 +1,6 @@
 import { DatabaseSync, type SQLInputValue, type StatementSync } from "node:sqlite";
 import { mkdirSync } from "node:fs";
-import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-
-export const DATA_DIR = path.resolve(here, "..", "..", "..", "data");
-export const DB_PATH = process.env.DATA_FILE ?? path.join(DATA_DIR, "mynotion.db");
+import { DATA_DIR, DB_PATH } from "./lib/paths.ts";
 
 mkdirSync(DATA_DIR, { recursive: true });
 

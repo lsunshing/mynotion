@@ -1,12 +1,7 @@
 import { randomInt } from "node:crypto";
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
-
-const here = path.dirname(fileURLToPath(import.meta.url));
-
-/** 与 db.ts 的 DATA_DIR 同目录；不 import db.ts，避免取 token 就把 SQLite 打开。 */
-export const TOKEN_PATH = process.env.TOKEN_FILE ?? path.resolve(here, "..", "..", "..", "..", "data", "token");
+import { TOKEN_PATH } from "./paths.ts";
 
 export const COOKIE_NAME = "mynotion_token";
 
