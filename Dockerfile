@@ -1,12 +1,13 @@
-# syntax=docker/dockerfile:1
-
 # MyNotion 容器镜像：三阶段，运行镜像里只有服务端源码、前端产物和服务端的生产依赖。
 #
 #   docker build -t mynotion .
 #   docker compose up -d
 #
-# 国内网络把依赖源换成镜像站：
-#   docker build --build-arg NPM_REGISTRY=https://registry.npmmirror.com -t mynotion .
+# 在中国大陆构建，两个源都要换（Docker Hub 与 npm 都不通）：
+#   docker build \
+#     --build-arg NODE_IMAGE=docker.m.daocloud.io/library/node:24-slim \
+#     --build-arg NPM_REGISTRY=https://registry.npmmirror.com \
+#     -t mynotion .
 
 ARG NODE_IMAGE=node:24-slim
 # 默认走 npm 官方源；在中国大陆构建可覆盖为 registry.npmmirror.com。
@@ -52,6 +53,8 @@ COPY --from=server-deps /app ./
 COPY apps/server/src ./apps/server/src
 COPY packages/shared/src ./packages/shared/src
 COPY scripts ./scripts
+# 前端产物只有这一份进镜像，源码和 devDependencies 都留在构建阶段。
+COPY --from=web-build /app/apps/web/dist ./apps/web/dist
 
 ENV HOST=0.0.0.0 \
     PORT=8791 \

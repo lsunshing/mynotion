@@ -23,17 +23,17 @@ docker compose exec mynotion node scripts/share.mjs
 输出：
 
 ```
-访问凭证：p2zgpnzqzvarf5
-本机：    http://127.0.0.1:8791/login?token=p2zgpnzqzvarf5
-局域网：  http://10.1.95.13:8791/login?token=p2zgpnzqzvarf5
+访问凭证：gssegc46vcuedb
+本机：    http://127.0.0.1:8791/login?token=gssegc46vcuedb
+局域网：  http://172.18.0.2:8791/login?token=gssegc46vcuedb
 ```
 
 点第二条链接（或把它粘到浏览器）就进去了，浏览器会拿到一个有效期一年的 Cookie，之后不用再输。**凭证存在卷里的 `/data/token`，容器重启不会变**；删掉它才会换新的，那样所有已登录的设备都要重新验证。
 
-想让链接里的地址更好看（域名、固定 IP），把宿主机地址传进去：
+第三条是容器自己的网卡地址，宿主机和局域网都用不了 —— 手机/平板要用局域网地址的话，把它传进去：
 
 ```bash
-docker compose exec -e SHARE_HOSTS=192.168.1.20,nas.home mynotion node scripts/share.mjs
+docker compose exec -e SHARE_HOSTS=192.168.1.20 mynotion node scripts/share.mjs
 ```
 
 ## 数据在哪、怎么备份
@@ -74,12 +74,35 @@ ports:
 
 | 参数 | 默认 | 说明 |
 | --- | --- | --- |
-| `NPM_REGISTRY` | `https://registry.npmjs.org` | 中国大陆构建建议改成 `https://registry.npmmirror.com` |
-| `NODE_IMAGE` | `node:24-slim` | 必须是 Debian（glibc）系；alpine 的 musl 没有 rolldown/vite 的二进制包 |
+| `NODE_IMAGE` | `node:24-slim` | 基础镜像。必须是 Debian（glibc）系；alpine 的 musl 没有 rolldown/vite 的二进制包 |
+| `NPM_REGISTRY` | `https://registry.npmjs.org` | 依赖源，同时用于 corepack 取 pnpm |
+
+在中国大陆构建，Docker Hub 通常连不上（`registry-1.docker.io` 直接超时），两个源都要换：
 
 ```bash
-docker build --build-arg NPM_REGISTRY=https://registry.npmmirror.com -t mynotion .
+docker build \
+  --build-arg NODE_IMAGE=docker.m.daocloud.io/library/node:24-slim \
+  --build-arg NPM_REGISTRY=https://registry.npmmirror.com \
+  -t mynotion .
 ```
+
+用 compose 的话这两个参数读环境变量，构建前 export 一次即可：
+
+```bash
+export NODE_IMAGE=docker.m.daocloud.io/library/node:24-slim
+export NPM_REGISTRY=https://registry.npmmirror.com
+docker compose up -d --build
+```
+
+写哪个镜像加速站取决于当时哪个活着，先探一下再决定：
+
+```bash
+for m in docker.m.daocloud.io hub.rat.dev; do
+  docker manifest inspect "$m/library/node:24-slim" >/dev/null && echo "$m OK" || echo "$m fail"
+done
+```
+
+也可以给 Docker 配全局 `registry-mirrors`（Docker Desktop → Settings → Docker Engine），那样 `node:24-slim` 不用改参数就能拉下来，只是会同时影响你其它镜像的拉取来源。
 
 Apple Silicon 或其他架构直接构建即可，依赖里的平台二进制会按目标架构解析；跨架构出镜像用 `docker buildx build --platform linux/amd64`。
 

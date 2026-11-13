@@ -2,9 +2,12 @@ services:
   mynotion:
     build:
       context: .
-      # 国内网络构建时去掉下面两行的注释（也可以 docker build --build-arg 传）。
-      # args:
-      #   NPM_REGISTRY: https://registry.npmmirror.com
+      # 国内网络两个源都要换，构建前 export 一下（默认值是给海外/CI 用的官方源）：
+      #   export NODE_IMAGE=docker.m.daocloud.io/library/node:24-slim
+      #   export NPM_REGISTRY=https://registry.npmmirror.com
+      args:
+        NODE_IMAGE: ${NODE_IMAGE:-node:24-slim}
+        NPM_REGISTRY: ${NPM_REGISTRY:-https://registry.npmjs.org}
     image: mynotion:local
     restart: unless-stopped
     ports:
